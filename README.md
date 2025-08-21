@@ -1,5 +1,5 @@
 # Incident-Response-Script
-Upgrade Incident Response Script for Windows (Upgrade previously created scripts).
+Upgrade Incident Response Script for Windows (Upgrade previously created scripts, 약 1년전에 개발한 스크립트 업그레이드).
 > **Reference** : https://github.com/Digital-Forensic-Study/LDDC_Batch_script
 
 <br>
