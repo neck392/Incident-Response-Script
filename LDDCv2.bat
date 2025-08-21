@@ -1,7 +1,6 @@
 :: 25.08.21
 :: [Live Disk Data Collector] 휘발성과 비휘발성 데이터 수집 개인 업그레이드
 @echo off
-cd /d "%~dp0"
 
 ::dir 생성 경로 설정
 set "result=_result"
@@ -25,24 +24,24 @@ set "recent=%nonvol%\_recent"
 set "quickLaunch=%nonvol%\_quicklaunch"
 
 :REDO
-echo(----------------------------------------------
-echo(
-echo(
-echo(
-echo(   :          :'''.      :'''.        .'''''.
-echo(   :          :    '.    :    '.    .'
-echo(   :          :     :    :     :    :
-echo(   :          :    .'    :    .'    '.
-echo(   :.......   :...'      :...'        '.....'
-echo(
-echo(
-echo(
-echo(--------- (Live Disk Data Collector) ---------
-echo(1. All data
-echo(2. Volatile data
-echo(3. Non-volatile data
-echo(4. Program end
-echo(----------------------------------------------
+echo ----------------------------------------------
+echo.
+echo.
+echo.
+echo   :          :'''.      :'''.        .'''''.
+echo   :          :    '.    :    '.    .'
+echo   :          :     :    :     :    :
+echo   :          :    .'    :    .'    '.
+echo   :.......   :...'      :...'        '.....'
+echo.
+echo.
+echo.
+echo --------- (Live Disk Data Collector) ---------
+echo 1. All data
+echo 2. Volatile data
+echo 3. Non-volatile data
+echo 4. Program end
+echo ----------------------------------------------
 set /p inputNum=Enter the number you want to run :
 
 if "%inputNum%"=="1" goto 1
@@ -55,7 +54,7 @@ goto ERROR
 :1
 if not exist "%result%" (
     mkdir "%result%"
-    echo Created %result% directory.
+    echo Created %result% directory. 
     echo START Date: %DATE% Time: %TIME% > _result\log.txt
 ) else (
     echo %result% directory already exists. passing...
@@ -63,10 +62,11 @@ if not exist "%result%" (
 
 if not exist "%prefetch%" (
     mkdir "%prefetch%"
-    echo Created %prefetch% directory.
+    echo Created %prefetch% directory. 
     echo start prefetch_part at Date: %DATE% Time: %TIME% >> _result\log.txt
     forecopy_handy.exe -p .\_result\_prefetch\
-    if exist "%SystemRoot%\Prefetch" robocopy "%SystemRoot%\Prefetch" "%prefetch%\_mirror" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%prefetch%\robocopy_prefetch.txt"
+    ::프리패치 파일 리스트들을 뽑아주는 명령어지만 forecopy_handy에서 프리패치 파일 자체들을 뽑아주는 명령어 찾아서 폐기
+    ::dir %SystemRoot%\Prefetch > result\_prefetch\prefetch_log.txt
 ) else (
     echo %prefetch% directory already exists. passing...
 )
@@ -96,7 +96,6 @@ if not exist "%vol%" (
         netsh interface ip show config > "%net%\netsh_ip_config.txt"
         netsh advfirewall show allprofiles > "%net%\firewall_profiles.txt"
         netsh winhttp show proxy > "%net%\winhttp_proxy.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\tcpvcon.exe" "%ProgramFiles%\SysinternalsSuite\tcpvcon.exe" -accepteula -a -n > "%net%\tcpvcon_full.txt"
     ) else (
         echo %net% directory already exists. passing...
     )
@@ -121,10 +120,6 @@ if not exist "%vol%" (
         systeminfo > "%process%\systeminfo.txt"
         tzutil /g > "%process%\timezone.txt"
         schtasks /query /fo LIST /v > "%process%\scheduled_tasks.txt"
-
-        if exist "%ProgramFiles%\SysinternalsSuite\handle.exe"   "%ProgramFiles%\SysinternalsSuite\handle.exe" -accepteula -a -u > "%process%\handle_verbose.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\listdlls.exe" "%ProgramFiles%\SysinternalsSuite\listdlls.exe" -accepteula -v > "%process%\listdlls_verbose.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\autorunsc.exe" "%ProgramFiles%\SysinternalsSuite\autorunsc.exe" -accepteula -a * -ct -nobanner -o "%process%\autoruns.csv"
     ) else (
         echo %process% directory already exists. passing...
     )
@@ -145,8 +140,6 @@ if not exist "%vol%" (
         whoami /all > "%logonAccount%\whoami_all.txt"
         query user > "%logonAccount%\query_user.txt" 2> "%logonAccount%\query_user.err"
         net accounts > "%logonAccount%\net_accounts.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\logonsessions.exe" "%ProgramFiles%\SysinternalsSuite\logonsessions.exe" -accepteula -p > "%logonAccount%\logonsessions_proc.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\psloggedon.exe"   "%ProgramFiles%\SysinternalsSuite\psloggedon.exe" -accepteula > "%logonAccount%\psloggedon_full.txt"
     ) else (
         echo %logonAccount% directory already exists. passing...
     )
@@ -163,18 +156,9 @@ if not exist "%nonvol%" (
     if not exist "%cache%" (
         mkdir "%cache%"
         set "cache=%nonvol%\_cache"
+        :: set "chromeCache=C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Cache"
         echo start cache_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Cache" "%cache%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%cache%\robocopy_chrome_cache.txt"
-
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\*") do (
-            if exist "%%~fP\Cache" robocopy "%%~fP\Cache" "%cache%\Chrome_%%~nP_Cache" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cache%\Chrome_%%~nP_Cache.log"
-        )
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\*") do (
-            if exist "%%~fP\Cache" robocopy "%%~fP\Cache" "%cache%\Edge_%%~nP_Cache" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cache%\Edge_%%~nP_Cache.log"
-        )
-        for /d %%P in ("%APPDATA%\Mozilla\Firefox\Profiles\*") do (
-            robocopy "%%~fP" "%cache%\Firefox_%%~nP" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T /xd cache2 > "%cache%\Firefox_%%~nP.log"
-        )
     ) else (
         echo %cache% directory already exists. passing...
     )
@@ -185,13 +169,6 @@ if not exist "%nonvol%" (
         set "cookie=%nonvol%\_cookie"
         echo start cookie_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Network" "%cookie%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%cookie%\cookie.txt"
-
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\*") do (
-            if exist "%%~fP\Network" robocopy "%%~fP\Network" "%cookie%\Chrome_%%~nP_Network" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cookie%\Chrome_%%~nP_Network.log"
-        )
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\*") do (
-            if exist "%%~fP\Network" robocopy "%%~fP\Network" "%cookie%\Edge_%%~nP_Network" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cookie%\Edge_%%~nP_Network.log"
-        )
     ) else (
         echo %cookie% directory already exists. passing...
     )
@@ -202,6 +179,7 @@ if not exist "%nonvol%" (
         echo start registry_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -g .\_result\_nonvol\_registry\
 
+        :: 추가
         reg save HKLM\SAM        "%registry%\SAM"        /y >nul 2>&1
         reg save HKLM\SYSTEM     "%registry%\SYSTEM"     /y >nul 2>&1
         reg save HKLM\SOFTWARE   "%registry%\SOFTWARE"   /y >nul 2>&1
@@ -218,9 +196,6 @@ if not exist "%nonvol%" (
         mkdir "%mft%"
         echo start mft_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -m .\_result\_nonvol\_mft\
-
-        fsutil fsinfo ntfsinfo %SystemDrive% > "%mft%\ntfsinfo.txt" 2> "%mft%\ntfsinfo.err"
-        fsutil usn queryjournal %SystemDrive% > "%mft%\usn_journal_info.txt" 2> "%mft%\usn_journal_info.err"
     ) else (
         echo %mft% directory already exists. passing...
     )
@@ -230,24 +205,16 @@ if not exist "%nonvol%" (
         mkdir "%eventLog%"
         echo start eventlog_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -e .\_result\_nonvol\_eventlog\
-
-        for /f "delims=" %%L in ('wevtutil el') do (
-            wevtutil epl "%%L" "%eventLog%\%%L.evtx" 2>> "%eventLog%\_wevtutil_errors.txt"
-        )
     ) else (
         echo %eventLog% directory already exists. passing...
     )
-    
+
     ::recent
     if not exist "%recent%" (
         mkdir "%recent%"
         set "recent=%nonvol%\_recent"
         echo start recent_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "%APPDATA%\Microsoft\Office\Recent" "%recent%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%recent%\recent.txt"
-
-        robocopy "%APPDATA%\Microsoft\Windows\Recent" "%recent%\ShellRecent" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\ShellRecent.log"
-        robocopy "%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations" "%recent%\JumpLists_AutoDest" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\JumpLists_AutoDest.log"
-        robocopy "%APPDATA%\Microsoft\Windows\Recent\CustomDestinations"     "%recent%\JumpLists_CustomDest" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\JumpLists_CustomDest.log"
     ) else (
         echo %recent% directory already exists. passing...
     )
@@ -258,8 +225,6 @@ if not exist "%nonvol%" (
         set "quickLaunch=%nonvol%\_quicklaunch"
         echo start quicklaunch_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "%APPDATA%\Microsoft\Internet Explorer\Quick Launch" "%quickLaunch%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%quickLaunch%\quicklaunch.txt"
-
-        robocopy "%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar" "%quickLaunch%\TaskBar" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%quickLaunch%\TaskBar.log"
     ) else (
         echo %quickLaunch% directory already exists. passing...
     )
@@ -272,10 +237,10 @@ goto REDO
 pause
 
 ::vol
-:2
+:2 
 if not exist "%result%" (
     mkdir "%result%"
-    echo Created %result% directory.
+    echo Created %result% directory. 
     echo START Date: %DATE% Time: %TIME% > _result\log.txt
 ) else (
     echo %result% directory already exists. passing...
@@ -297,6 +262,7 @@ if not exist "%vol%" (
         arp -a > "%net%\arp.txt"
         route print > "%net%\route.txt"
 
+        :: 추가 네트워크 수집
         ipconfig /all > "%net%\ipconfig_all.txt"
         ipconfig /displaydns > "%net%\dns_cache.txt" 2> "%net%\dns_cache.err"
         netstat -abno > "%net%\netstat_abno.txt" 2> "%net%\netstat_abno.err"
@@ -304,7 +270,6 @@ if not exist "%vol%" (
         netsh interface ip show config > "%net%\netsh_ip_config.txt"
         netsh advfirewall show allprofiles > "%net%\firewall_profiles.txt"
         netsh winhttp show proxy > "%net%\winhttp_proxy.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\tcpvcon.exe" "%ProgramFiles%\SysinternalsSuite\tcpvcon.exe" -accepteula -a -n > "%net%\tcpvcon_full.txt"
     ) else (
         echo %net% directory already exists. passing...
     )
@@ -319,6 +284,7 @@ if not exist "%vol%" (
         handle.exe > "%process%\handle_opened_files.txt"
         Listdlls.exe > "%process%\Listdlls.txt"
 
+        :: 추가 프로세스/시스템 정보
         tasklist /v > "%process%\tasklist_verbose.txt"
         tasklist /svc > "%process%\tasklist_svc.txt"
         sc queryex type= service state= all > "%process%\services_all.txt"
@@ -328,10 +294,6 @@ if not exist "%vol%" (
         systeminfo > "%process%\systeminfo.txt"
         tzutil /g > "%process%\timezone.txt"
         schtasks /query /fo LIST /v > "%process%\scheduled_tasks.txt"
-
-        if exist "%ProgramFiles%\SysinternalsSuite\handle.exe"   "%ProgramFiles%\SysinternalsSuite\handle.exe" -accepteula -a -u > "%process%\handle_verbose.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\listdlls.exe" "%ProgramFiles%\SysinternalsSuite\listdlls.exe" -accepteula -v > "%process%\listdlls_verbose.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\autorunsc.exe" "%ProgramFiles%\SysinternalsSuite\autorunsc.exe" -accepteula -a * -ct -nobanner -o "%process%\autoruns.csv"
     ) else (
         echo %process% directory already exists. passing...
     )
@@ -348,11 +310,10 @@ if not exist "%vol%" (
         logonsessions.exe > "%logonAccount%\logonsessions.txt"
         PsLoggedon.exe > "%logonAccount%\PsLoggedon.txt"
 
+        :: 추가 계정/세션/정책
         whoami /all > "%logonAccount%\whoami_all.txt"
         query user > "%logonAccount%\query_user.txt" 2> "%logonAccount%\query_user.err"
         net accounts > "%logonAccount%\net_accounts.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\logonsessions.exe" "%ProgramFiles%\SysinternalsSuite\logonsessions.exe" -accepteula -p > "%logonAccount%\logonsessions_proc.txt"
-        if exist "%ProgramFiles%\SysinternalsSuite\psloggedon.exe"   "%ProgramFiles%\SysinternalsSuite\psloggedon.exe" -accepteula > "%logonAccount%\psloggedon_full.txt"
     ) else (
         echo %logonAccount% directory already exists. passing...
     )
@@ -368,7 +329,7 @@ pause
 :3
 if not exist "%result%" (
     mkdir "%result%"
-    echo Created %result% directory.
+    echo Created %result% directory. 
     echo START Date: %DATE% Time: %TIME% > _result\log.txt
 ) else (
     echo %result% directory already exists. passing...
@@ -376,10 +337,11 @@ if not exist "%result%" (
 
 if not exist "%prefetch%" (
     mkdir "%prefetch%"
-    echo Created %prefetch% directory.
+    echo Created %prefetch% directory. 
     echo start prefetch_part at Date: %DATE% Time: %TIME% >> _result\log.txt
     forecopy_handy.exe -p .\_result\_prefetch\
-    if exist "%SystemRoot%\Prefetch" robocopy "%SystemRoot%\Prefetch" "%prefetch%\_mirror" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%prefetch%\robocopy_prefetch.txt"
+    ::프리패치 파일 리스트들을 뽑아주는 명령어지만 forecopy_handy에서 프리패치 파일 자체들을 뽑아주는 명령어 찾아서 폐기
+    ::dir %SystemRoot%\Prefetch > result\_prefetch\prefetch_log.txt
 ) else (
     echo %prefetch% directory already exists. passing...
 )
@@ -392,18 +354,9 @@ if not exist "%nonvol%" (
     if not exist "%cache%" (
         mkdir "%cache%"
         set "cache=%nonvol%\_cache"
+        :: set "chromeCache=C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Cache"
         echo start cache_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Cache" "%cache%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%cache%\robocopy_chrome_cache.txt"
-
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\*") do (
-            if exist "%%~fP\Cache" robocopy "%%~fP\Cache" "%cache%\Chrome_%%~nP_Cache" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cache%\Chrome_%%~nP_Cache.log"
-        )
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\*") do (
-            if exist "%%~fP\Cache" robocopy "%%~fP\Cache" "%cache%\Edge_%%~nP_Cache" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cache%\Edge_%%~nP_Cache.log"
-        )
-        for /d %%P in ("%APPDATA%\Mozilla\Firefox\Profiles\*") do (
-            robocopy "%%~fP" "%cache%\Firefox_%%~nP" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T /xd cache2 > "%cache%\Firefox_%%~nP.log"
-        )
     ) else (
         echo %cache% directory already exists. passing...
     )
@@ -414,13 +367,6 @@ if not exist "%nonvol%" (
         set "cookie=%nonvol%\_cookie"
         echo start cookie_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default\Network" "%cookie%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%cookie%\cookie.txt"
-
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\*") do (
-            if exist "%%~fP\Network" robocopy "%%~fP\Network" "%cookie%\Chrome_%%~nP_Network" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cookie%\Chrome_%%~nP_Network.log"
-        )
-        for /d %%P in ("C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\*") do (
-            if exist "%%~fP\Network" robocopy "%%~fP\Network" "%cookie%\Edge_%%~nP_Network" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%cookie%\Edge_%%~nP_Network.log"
-        )
     ) else (
         echo %cookie% directory already exists. passing...
     )
@@ -431,6 +377,7 @@ if not exist "%nonvol%" (
         echo start registry_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -g .\_result\_nonvol\_registry\
 
+        :: 추가
         reg save HKLM\SAM        "%registry%\SAM"        /y >nul 2>&1
         reg save HKLM\SYSTEM     "%registry%\SYSTEM"     /y >nul 2>&1
         reg save HKLM\SOFTWARE   "%registry%\SOFTWARE"   /y >nul 2>&1
@@ -447,9 +394,6 @@ if not exist "%nonvol%" (
         mkdir "%mft%"
         echo start mft_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -m .\_result\_nonvol\_mft\
-
-        fsutil fsinfo ntfsinfo %SystemDrive% > "%mft%\ntfsinfo.txt" 2> "%mft%\ntfsinfo.err"
-        fsutil usn queryjournal %SystemDrive% > "%mft%\usn_journal_info.txt" 2> "%mft%\usn_journal_info.err"
     ) else (
         echo %mft% directory already exists. passing...
     )
@@ -459,10 +403,6 @@ if not exist "%nonvol%" (
         mkdir "%eventLog%"
         echo start eventlog_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         forecopy_handy.exe -e .\_result\_nonvol\_eventlog\
-
-        for /f "delims=" %%L in ('wevtutil el') do (
-            wevtutil epl "%%L" "%eventLog%\%%L.evtx" 2>> "%eventLog%\_wevtutil_errors.txt"
-        )
     ) else (
         echo %eventLog% directory already exists. passing...
     )
@@ -473,10 +413,6 @@ if not exist "%nonvol%" (
         set "recent=%nonvol%\_recent"
         echo start recent_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "%APPDATA%\Microsoft\Office\Recent" "%recent%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%recent%\recent.txt"
-
-        robocopy "%APPDATA%\Microsoft\Windows\Recent" "%recent%\ShellRecent" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\ShellRecent.log"
-        robocopy "%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations" "%recent%\JumpLists_AutoDest" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\JumpLists_AutoDest.log"
-        robocopy "%APPDATA%\Microsoft\Windows\Recent\CustomDestinations"     "%recent%\JumpLists_CustomDest" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%recent%\JumpLists_CustomDest.log"
     ) else (
         echo %recent% directory already exists. passing...
     )
@@ -487,8 +423,6 @@ if not exist "%nonvol%" (
         set "quickLaunch=%nonvol%\_quicklaunch"
         echo start quicklaunch_part at Date: %DATE% Time: %TIME% >> _result\log.txt
         robocopy "%APPDATA%\Microsoft\Internet Explorer\Quick Launch" "%quickLaunch%" /s /e /z /copy:DAT /r:3 /w:5 /log:"%quickLaunch%\quicklaunch.txt"
-
-        robocopy "%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar" "%quickLaunch%\TaskBar" /s /e /z /copy:DAT /r:3 /w:5 /DCOPY:T > "%quickLaunch%\TaskBar.log"
     ) else (
         echo %quickLaunch% directory already exists. passing...
     )
